@@ -4,6 +4,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <link rel="icon" href="{{ url_for('static', filename='favicon.ico') }}" type="image/x-icon">
     <title>Documentação da API</title>
 
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
@@ -37,7 +39,6 @@
         <h1 class="text-center mb-4">Documentação da API</h1>
         <p class="text-center mb-5">Esta é a documentação da API para gerenciamento de livros.</p>
 
-        <!-- Endpoint 1: Listar Livros -->
         <div class="api-endpoint">
             <h3>1. Listar Livros</h3>
             <p><strong>Descrição:</strong> Retorna uma lista de todos os livros cadastrados.</p>
@@ -60,7 +61,6 @@
             </pre>
         </div>
 
-        <!-- Endpoint 2: Doar Livro -->
         <div class="api-endpoint">
             <h3>2. Doar Livro</h3>
             <p><strong>Descrição:</strong> Adiciona um novo livro ao banco de dados.</p>
@@ -84,7 +84,6 @@
             </pre>
         </div>
 
-        <!-- Endpoint 3: Editar Livro -->
         <div class="api-endpoint">
             <h3>3. Editar Livro</h3>
             <p><strong>Descrição:</strong> Edita as informações de um livro existente.</p>
