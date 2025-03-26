@@ -1,8 +1,10 @@
 from flask import Flask, request, jsonify, render_template
 import sqlite3
 import re
+import flask_cors import CORS # type: ignore
 
 app = Flask(__name__)
+CORS(app)
 
 def init_db():
    with sqlite3.connect('database.db') as conn:
