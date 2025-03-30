@@ -109,6 +109,31 @@ def deletar_livro(livro_id):
         conn.commit()
 
     return jsonify({'message': 'Livro deletado com sucesso!'}), 200
+
+@app.route('/livros/<string:buscar_livro>', methods=['GET'])
+def livro(buscar_livro):
+    with sqlite3.connect('database.db') as conn:
+        cursor = conn.cursor()
+        cursor.execute("SELECT * FROM livros WHERE LOWER(titulo) LIKE ?", (f"%{buscar_livro.lower()}%",))
+        livros = cursor.fetchall()
+        livros_formatados = []
+        
+        for livro in livros:
+            livros_formatados.append({
+                'id': livro[0],
+                'titulo': livro[1],
+                'categoria': livro[2],
+                'autor': livro[3],
+                'imagem_url': livro[4]
+            })
+
+        if not livros_formatados:
+            return jsonify({'message': 'Livro nao encontrado'}), 404
+  
+        
+        # conn.close()
+
+    return jsonify(livros_formatados), 200
     
 
 if __name__ == '__main__':
