@@ -9,6 +9,7 @@ import asyncio
 load_dotenv()
 
 app = Flask(__name__)
+app.config['ASYNC_MODE'] = True
 CORS(app)
     
 
