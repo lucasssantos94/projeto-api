@@ -1,51 +1,79 @@
 from flask import Flask, request, jsonify, render_template
 from flask_cors import CORS 
-import sqlite3
+import asyncpg
 import re
+import os
+from dotenv import load_dotenv
+import asyncio
+
+load_dotenv()
 
 app = Flask(__name__)
 CORS(app)
 
-def init_db():
-   with sqlite3.connect('database.db') as conn:
-       conn.execute("""CREATE TABLE IF NOT EXISTS livros (
-           id INTEGER PRIMARY KEY, 
-           titulo TEXT NOT NULL, 
-           categoria TEXT NOT NULL, 
-           autor TEXT NOT NULL, 
-           imagem_url TEXT NOT NULL)""")
-       print('Database created')
-       
-init_db()
+def validar_url(url):
+    regex = r"^https:\/\/(www\.)?[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()@:%_\+.~#?&//=]*)$"
+    return re.match(regex, url)
+
+# Configuração do banco de dados Neon
+DATABASE_URL = os.getenv('DATABASE_URL')
+
+async def init_db():
+    try:
+        conn = await asyncpg.connect(DATABASE_URL)
+        await conn.execute("""
+            CREATE TABLE IF NOT EXISTS livros (
+                id SERIAL PRIMARY KEY, 
+                titulo TEXT NOT NULL, 
+                categoria TEXT NOT NULL, 
+                autor TEXT NOT NULL, 
+                imagem_url TEXT NOT NULL
+            )
+        """)
+        print('Database created')
+    except Exception as e:
+        print(f"Error creating database: {e}")
+    finally:
+        if conn:
+            await conn.close()
+
+# Corrigindo a inicialização do event loop
+async def async_init():
+    await init_db()
+
+def sync_init():
+    asyncio.run(async_init())
+
+# Inicialização do banco de dados
+sync_init()
 
 @app.route('/')
 def home_page():
     return render_template('docs.html', title="Home")
 
 @app.route('/livros', methods=['GET'])
-def listar_livros():
-    with sqlite3.connect('database.db') as conn:        
-        livros = conn.execute("SELECT * FROM livros").fetchall()
+async def listar_livros():
+    try:
+        conn = await asyncpg.connect(DATABASE_URL)
+        livros = await conn.fetch("SELECT * FROM livros ORDER BY id")
         
-    livros_formatados = []
-    for livro in livros:
-        livros_formatados.append({
-            'id': livro[0],
-            'titulo': livro[1],
-            'categoria': livro[2],
-            'autor': livro[3],
-            'imagem_url': livro[4]
-        })
+        livros_formatados = [{
+            'id': livro['id'],
+            'titulo': livro['titulo'],
+            'categoria': livro['categoria'],
+            'autor': livro['autor'],
+            'imagem_url': livro['imagem_url']
+        } for livro in livros]
         
-    return jsonify(livros_formatados)
-
-def validar_url(url):
-    regex = r"^https:\/\/(www\.)?[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()@:%_\+.~#?&//=]*)$"
-    return re.match(regex, url)
-
+        return jsonify(livros_formatados)
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+    finally:
+        if conn:
+            await conn.close()
 
 @app.route('/doar', methods=['POST'])
-def doar_livro():
+async def doar_livro():
     dados = request.get_json() 
        
     titulo = dados.get('titulo')
@@ -59,83 +87,97 @@ def doar_livro():
     if not validar_url(imagem_url):
         return jsonify({'error': 'URL da imagem inválida'}), 400
     
-    with sqlite3.connect('database.db') as conn:
-        conn.execute("""INSERT INTO livros (titulo, categoria, autor, imagem_url)
-                     VALUES (?,?,?,?)""", (titulo, categoria, autor, imagem_url))
+    try:
+        conn = await asyncpg.connect(DATABASE_URL)
+        await conn.execute("""
+            INSERT INTO livros (titulo, categoria, autor, imagem_url)
+            VALUES ($1, $2, $3, $4)
+        """, titulo, categoria, autor, imagem_url)
         
-        conn.commit()
-        
-    return jsonify({'message': 'Livro doado com sucesso!'}), 201 
-
+        return jsonify({'message': 'Livro doado com sucesso!'}), 201
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+    finally:
+        if conn:
+            await conn.close()
 
 @app.route('/editar/<int:livro_id>', methods=['PUT'])
-def editar_livro(livro_id):
+async def editar_livro(livro_id):
     dados = request.get_json()
 
-    with sqlite3.connect('database.db') as conn:
-        cursor = conn.cursor()
-        cursor.execute("SELECT titulo, categoria, autor, imagem_url FROM livros WHERE id = ?", (livro_id,))
-        livro = cursor.fetchone()
+    try:
+        conn = await asyncpg.connect(DATABASE_URL)
+        livro = await conn.fetchrow("SELECT * FROM livros WHERE id = $1", livro_id)
 
         if not livro:
             return jsonify({'message': 'Livro não encontrado'}), 404
 
-        titulo = dados.get('titulo', livro[0])
-        categoria = dados.get('categoria', livro[1])
-        autor = dados.get('autor', livro[2])
-        imagem_url = dados.get('imagem_url', livro[3])
+        titulo = dados.get('titulo', livro['titulo'])
+        categoria = dados.get('categoria', livro['categoria'])
+        autor = dados.get('autor', livro['autor'])
+        imagem_url = dados.get('imagem_url', livro['imagem_url'])
 
-        cursor.execute("""
+        if imagem_url and not validar_url(imagem_url):
+            return jsonify({'error': 'URL da imagem inválida'}), 400
+
+        await conn.execute("""
             UPDATE livros 
-            SET titulo = ?, categoria = ?, autor = ?, imagem_url = ?
-            WHERE id = ?
-        """, (titulo, categoria, autor, imagem_url, livro_id))
+            SET titulo = $1, categoria = $2, autor = $3, imagem_url = $4
+            WHERE id = $5
+        """, titulo, categoria, autor, imagem_url, livro_id)
 
-        conn.commit()
-
-    return jsonify({'message': 'Livro editado com sucesso!'}), 200
+        return jsonify({'message': 'Livro editado com sucesso!'}), 200
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+    finally:
+        if conn:
+            await conn.close()
 
 @app.route('/deletar/<int:livro_id>', methods=['DELETE'])
-def deletar_livro(livro_id):
-    with sqlite3.connect('database.db') as conn:
-        cursor = conn.cursor()
-        cursor.execute("SELECT * FROM livros WHERE id = ?", (livro_id,))
-        livro = cursor.fetchone()
+async def deletar_livro(livro_id):
+    try:
+        conn = await asyncpg.connect(DATABASE_URL)
+        livro = await conn.fetchrow("SELECT * FROM livros WHERE id = $1", livro_id)
 
         if not livro:
-            return jsonify({'message': 'Livro nao encontrado'}), 404
+            return jsonify({'message': 'Livro não encontrado'}), 404
 
-        cursor.execute("DELETE FROM livros WHERE id = ?", (livro_id,))
-        conn.commit()
-
-    return jsonify({'message': 'Livro deletado com sucesso!'}), 200
+        await conn.execute("DELETE FROM livros WHERE id = $1", livro_id)
+        return jsonify({'message': 'Livro deletado com sucesso!'}), 200
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+    finally:
+        if conn:
+            await conn.close()
 
 @app.route('/livros/<string:buscar_livro>', methods=['GET'])
-def livro(buscar_livro):
-    with sqlite3.connect('database.db') as conn:
-        cursor = conn.cursor()
-        cursor.execute("SELECT * FROM livros WHERE LOWER(titulo) LIKE ?", (f"%{buscar_livro.lower()}%",))
-        livros = cursor.fetchall()
-        livros_formatados = []
+async def buscar_livro(buscar_livro):
+    try:
+        conn = await asyncpg.connect(DATABASE_URL)
+        livros = await conn.fetch("""
+            SELECT * FROM livros 
+            WHERE LOWER(titulo) LIKE LOWER($1) 
+            OR LOWER(autor) LIKE LOWER($1)
+            ORDER BY id
+        """, f"%{buscar_livro}%")
         
-        for livro in livros:
-            livros_formatados.append({
-                'id': livro[0],
-                'titulo': livro[1],
-                'categoria': livro[2],
-                'autor': livro[3],
-                'imagem_url': livro[4]
-            })
+        livros_formatados = [{
+            'id': livro['id'],
+            'titulo': livro['titulo'],
+            'categoria': livro['categoria'],
+            'autor': livro['autor'],
+            'imagem_url': livro['imagem_url']
+        } for livro in livros]
 
         if not livros_formatados:
-            return jsonify({'message': 'Livro nao encontrado'}), 404
-  
-        
-        # conn.close()
+            return jsonify({'message': 'Nenhum livro encontrado'}), 404
 
-    return jsonify(livros_formatados), 200
-    
+        return jsonify(livros_formatados), 200
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+    finally:
+        if conn:
+            await conn.close()
 
 if __name__ == '__main__':
     app.run(debug=True)
-
