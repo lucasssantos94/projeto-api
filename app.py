@@ -10,6 +10,7 @@ load_dotenv()
 
 app = Flask(__name__)
 CORS(app)
+    
 
 def validar_url(url):
     regex = r"^https:\/\/(www\.)?[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()@:%_\+.~#?&//=]*)$"
@@ -20,7 +21,7 @@ DATABASE_URL = os.getenv('DATABASE_URL')
 
 async def init_db():
     try:
-        conn = await asyncpg.connect(DATABASE_URL)
+        conn = await asyncpg.connect(DATABASE_URL, timeout=30, ssl="require")
         await conn.execute("""
             CREATE TABLE IF NOT EXISTS livros (
                 id SERIAL PRIMARY KEY, 
@@ -54,8 +55,12 @@ def home_page():
 @app.route('/livros', methods=['GET'])
 async def listar_livros():
     try:
+        app.logger.info("Tentando conectar ao banco de dados...")
         conn = await asyncpg.connect(DATABASE_URL)
+        app.logger.info("Conexão bem-sucedida, executando query...")
+        
         livros = await conn.fetch("SELECT * FROM livros ORDER BY id")
+        app.logger.info(f"Encontrados {len(livros)} livros")
         
         livros_formatados = [{
             'id': livro['id'],
@@ -66,10 +71,12 @@ async def listar_livros():
         } for livro in livros]
         
         return jsonify(livros_formatados)
+        
     except Exception as e:
-        return jsonify({'error': str(e)}), 500
+        app.logger.error(f"Erro na rota /livros: {str(e)}", exc_info=True)
+        return jsonify({'error': 'Internal Server Error', 'details': str(e)}), 500
     finally:
-        if conn:
+        if 'conn' in locals():
             await conn.close()
 
 @app.route('/doar', methods=['POST'])
