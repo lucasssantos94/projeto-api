@@ -49,3 +49,10 @@ async def init_db():
     
     await conn.close()
     print("✅ tabelas criadas com sucesso !")
+    
+async def get_db():
+    return await asyncpg.connect(DATABASE_URL, ssl="require")
+
+if __name__ == "__main__":
+    asyncio.run(init_db())
+    
