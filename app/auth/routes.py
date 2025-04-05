@@ -45,7 +45,7 @@ async def login():
     if not user or not bcrypt.verify(password, user['password']):
         return jsonify({'error': 'Email ou senha incorretos'}), 401
     
-    access_token = create_access_token(identity=user['id'], expires_delta=datetime.timedelta(hours=1))
+    access_token = create_access_token(identity=user['id'], expires_delta=datetime.timedelta(hours=2))
     return jsonify({'access_token': access_token}), 200
 
 @auth_bp.route('/logout', methods=['POST'])
