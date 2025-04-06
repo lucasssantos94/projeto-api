@@ -15,9 +15,9 @@ async def init_db():
     # users
     await conn.execute("""CREATE TABLE IF NOT EXISTS users (
         id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-        email TEXT NOT NULL,
+        email TEXT NOT NULL UNIQUE,
         password TEXT NOT NULL,
-        nickname TEXT NOT NULL,
+        nickname TEXT NOT NULL UNIQUE,
         is_admin BOOLEAN DEFAULT FALSE,
         avatar_url TEXT,
         created_at TIMESTAMP DEFAULT NOW()
