@@ -74,12 +74,11 @@ async def login():
 
     access_token = create_access_token(
         identity=user['id'],
-        additional_claims={
-            "role": user['role'],
+        additional_claims={            
             "nickname": user['nickname'], 
             "avatar_url": user['avatar_url'], 
             "email": user['email'],  
-            "is_admin": user['role'] == "admin"  
+            "is_admin": user['is_admin'] == "admin"  
         }
     )
     return jsonify({
