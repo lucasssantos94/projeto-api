@@ -18,6 +18,8 @@ async def register():
         email = data.get('email')
         password = data.get('password')
         nickname = data.get('nickname')
+        avatar_url = data.get('avatar_url')
+        is_admin = data.get('is_admin')
         
         if not all([email, password, nickname]):
             return jsonify({'error': 'Todos os campos devem ser preenchidos'}), 400
@@ -30,8 +32,8 @@ async def register():
 
         try:
             await conn.execute(
-                "INSERT INTO users (email, password, nickname) VALUES ($1, $2, $3)",
-                email, hashed_password, nickname
+                "INSERT INTO users (email, password, nickname) VALUES ($1, $2, $3, $4, $5)",
+                email, hashed_password, nickname, avatar_url, is_admin
             )
             await conn.close()
             return jsonify({'message': 'Cadastro realizado com sucesso!'}), 201
