@@ -46,12 +46,9 @@ async def get_user_books(user_id):
     if str(user_id) != str(current_user):
         return jsonify({'error': 'Acesso Negado'}), 403
     
-    return jsonify([dict(book) for book in books]), 200
-   
+    return jsonify([dict(book) for book in books]), 200 
             
-            
-            
-
+          
 @users_bp.route('/update', methods=['PUT'])
 @jwt_required()
 async def update_user():
@@ -71,12 +68,4 @@ async def update_user():
     
     return jsonify({'message': 'Perfil atualizado com sucesso'}), 200
 
-# @users_bp.route('/delete', methods=['DELETE'])
-# @jwt_required()
-# async def delete_user():
-#     current_user = get_jwt_identity()
-#     conn = await init_db()
-#     await conn.execute("DELETE FROM users WHERE id = $1", current_user)
-#     await conn.close()
-    
-#     return jsonify({'message': 'Conta excluída com sucesso'}), 200
+

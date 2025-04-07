@@ -70,8 +70,29 @@ async def login():
     if not bcrypt.verify(password, user['password']):
         return jsonify({'error': 'senha incorreto'}), 401
     
-    access_token = create_access_token(identity=user['id'], expires_delta=datetime.timedelta(hours=2))
-    return jsonify({'access_token': access_token}), 200
+
+
+    access_token = create_access_token(
+        identity=user['id'],
+        additional_claims={
+            "role": user['role'],
+            "nickname": user['nickname'], 
+            "avatar_url": user['avatar_url'], 
+            "email": user['email'],  
+            "is_admin": user['role'] == "admin"  
+        }
+    )
+    return jsonify({
+        'access_token': access_token,
+        'user_info': {  
+            'id': user['id'],
+            'nickname': user['nickname'],
+            'avatar_url': user['avatar_url'],
+            'email': user['email'],
+            'is_admin': user['role'] == "admin"
+        }
+    }), 200
+
 
 @auth_bp.route('/logout', methods=['POST'])
 @jwt_required()

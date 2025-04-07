@@ -31,18 +31,6 @@ async def update_user(user_id):
     
     return jsonify({'message': 'Usuário atualizado com sucesso'}), 200
 
-# @admin_bp.route('/users/<user_id>', methods=['DELETE'])
-# @jwt_required()
-# async def delete_user(user_id):
-#     current_user = get_jwt_identity()
-#     conn = await get_db()
-#     admin_check = await conn.fetchval("SELECT is_admin FROM users WHERE id = $1", current_user)
-    
-#     if not admin_check:
-#         return jsonify({'error': 'Acesso negado'}), 403
-    
-#     await conn.execute("DELETE FROM users WHERE id = $1", user_id)
-#     return jsonify({'message': 'Usuário excluído com sucesso'}), 200
 
 @admin_bp.route('/books', methods=['GET'])
 @jwt_required()
