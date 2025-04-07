@@ -32,7 +32,7 @@ async def register():
 
         try:
             await conn.execute(
-                "INSERT INTO users (email, password, nickname) VALUES ($1, $2, $3, $4, $5)",
+                "INSERT INTO users (email, password, nickname, avatar_url, is_admin) VALUES ($1, $2, $3, $4, $5)",
                 email, hashed_password, nickname, avatar_url, is_admin
             )
             await conn.close()
