@@ -89,7 +89,7 @@ async def login():
             'nickname': user['nickname'],
             'avatar_url': user['avatar_url'],
             'email': user['email'],
-            'is_admin': user['role'] == "admin"
+            'is_admin': user['is_admin'] == "admin"
         }
     }), 200
 
