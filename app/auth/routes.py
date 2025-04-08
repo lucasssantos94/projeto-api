@@ -67,10 +67,10 @@ async def login():
     user = await conn.fetchrow("SELECT * FROM users WHERE email = $1", email)
     
     if not user:
-        return jsonify({'error': 'Email não cadastrado'}), 401
+        return jsonify({'error': 'EMAIL NÃO CADASTRADO'}), 401
     
     if not bcrypt.verify(password, user['password']):
-        return jsonify({'error': 'senha incorreto'}), 401
+        return jsonify({'error': 'SENHA INCORRETA'}), 401
     
 
 
