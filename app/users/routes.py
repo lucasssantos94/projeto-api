@@ -32,21 +32,21 @@ async def get_user(user_id):
     return jsonify(dict(user)), 200
 
 
-@users_bp.route('/<uuid:user_id>/books', methods=['GET'])  # Alterado para uuid
+@users_bp.route('/<uuid:user_id>/books', methods=['GET'])
 @jwt_required()
 async def get_user_books(user_id):
     conn = await get_db()
     current_user = get_jwt_identity()
     
-    books = await conn.fetch("SELECT * FROM books WHERE user_id = $1", user_id)
-    await conn.close()
     
-    if not books:
-        return jsonify({'error': 'Livros do usuário nao encontrados'}), 404
     if str(user_id) != str(current_user):
-        return jsonify({'error': 'Acesso Negado'}), 403
+        await conn.close()
+        return jsonify({'error': 'Acesso Negado'}), 403    
     
-    return jsonify([dict(book) for book in books]), 200 
+    books = await conn.fetch("SELECT * FROM books WHERE user_id = $1", user_id)
+    await conn.close()    
+    
+    return jsonify([dict(book) for book in books]), 200
             
           
 @users_bp.route('/update', methods=['PUT'])
