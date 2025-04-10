@@ -1,5 +1,6 @@
 from flask import Blueprint, request, jsonify
 from flask_jwt_extended import jwt_required, get_jwt_identity
+from asyncpg.exceptions import UniqueViolationError
 from app.core.db import get_db
 from passlib.hash import bcrypt
 
@@ -63,12 +64,22 @@ async def update_user():
     
     current_user = get_jwt_identity()
     conn = await get_db()
-    await conn.execute("""
-        UPDATE users SET nickname = $1, avatar_url = $2 WHERE id = $3
-    """, nickname, avatar_url, current_user)
-    await conn.close()
     
-    return jsonify({'message': 'Perfil atualizado com sucesso'}), 200
+    try:
+        await conn.execute("""
+            UPDATE users SET nickname = $1, avatar_url = $2 WHERE id = $3
+        """, nickname, avatar_url, current_user)
+        
+        return jsonify({'message': 'Perfil atualizado com sucesso'}), 200
+        
+    except UniqueViolationError as e:
+        msg = str(e).lower()           
+        if 'nickname' in msg:
+            return jsonify({'error': 'Nickname já em uso'}), 409
+        return jsonify({'error': 'Dados já cadastrados'}), 409
+        
+    finally:
+        await conn.close()
 
 @users_bp.route('/password', methods=['PUT'])
 @jwt_required()
