@@ -1,6 +1,8 @@
 from flask import Blueprint, request, jsonify
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from app.core.db import get_db
+from passlib.hash import bcrypt
+
 
 users_bp = Blueprint('users', __name__)
 
@@ -67,5 +69,31 @@ async def update_user():
     await conn.close()
     
     return jsonify({'message': 'Perfil atualizado com sucesso'}), 200
+
+@users_bp.route('/password', methods=['PUT'])
+@jwt_required()
+async def update_password():
+    data = request.get_json()
+    old_password = data.get('old_password')
+    new_password = data.get('new_password')
+    
+    if not all([old_password, new_password]):
+        return jsonify({'error': 'Todos os campos devem ser preenchidos'}), 400
+    
+    current_user = get_jwt_identity()
+    conn = await get_db()
+    user = await conn.fetchrow("SELECT password FROM users WHERE id = $1", current_user)
+    
+    if not user:
+        return jsonify({'error': 'Usuário nao encontrado'}), 404
+    
+    if not bcrypt.verify(old_password, user['password']):
+        return jsonify({'error': 'Senha atual incorreta'}), 401
+    
+    hashed_password = bcrypt.hash(new_password)
+    await conn.execute("UPDATE users SET password = $1 WHERE id = $2", hashed_password, current_user)
+    await conn.close()
+    
+    return jsonify({'message': 'Senha atualizada com sucesso'}), 200
 
 
