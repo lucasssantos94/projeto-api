@@ -142,42 +142,48 @@ async def forgot_password():
 
 @auth_bp.route('/reset-password/<token>', methods=['POST'])
 async def reset_password(token):
+    conn = None  # ← importante para evitar erro no finally
     data = request.get_json()
     new_password = data.get('new_password')
     confirm_password = data.get('confirm_password')
-    
+
     if not all([new_password, confirm_password]):
         return jsonify({'error': 'Todos os campos são obrigatórios'}), 400
-    
+
     if new_password != confirm_password:
         return jsonify({'error': 'As senhas não coincidem'}), 400
-    
+
     try:
-        
-        user_id = verify_reset_token(current_app._get_current_object(), token)
-        
+        try:
+            user_id = verify_reset_token(current_app._get_current_object(), token)
+        except Exception as e:
+            logger.error(f"Erro ao verificar token: {str(e)}", exc_info=True)
+            return jsonify({'error': 'Link inválido ou expirado'}), 400
+
         if not user_id:
             return jsonify({'error': 'Link inválido ou expirado'}), 400
-        
-        
+
         conn = await get_db()
         user = await conn.fetchrow("SELECT * FROM users WHERE id = $1", user_id)
-        
+
         if not user:
             return jsonify({'error': 'Usuário não encontrado'}), 404
-        
-        
+
+        # com passlib
+        from passlib.hash import bcrypt
         hashed_password = bcrypt.hash(new_password)
+
         await conn.execute(
             "UPDATE users SET password = $1, reset_token = NULL, token_expires = NULL WHERE id = $2",
             hashed_password, user_id
         )
-        
+
         return jsonify({'message': 'Senha redefinida com sucesso!'}), 200
-        
+
     except Exception as e:
         logger.error(f"Erro ao redefinir senha: {str(e)}", exc_info=True)
         return jsonify({'error': 'Erro ao redefinir senha'}), 500
+
     finally:
         if conn:
             await conn.close()
