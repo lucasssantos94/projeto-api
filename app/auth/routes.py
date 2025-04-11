@@ -174,8 +174,8 @@ async def reset_password(token):
         hashed_password = bcrypt.hash(new_password)
 
         await conn.execute(
-            "UPDATE users SET password = $1, reset_token = NULL, token_expires = NULL WHERE id = $2",
-            hashed_password, user_id
+                "UPDATE users SET password = $1 WHERE id = $2",
+                hashed_password, user_id
         )
 
         return jsonify({'message': 'Senha redefinida com sucesso!'}), 200
