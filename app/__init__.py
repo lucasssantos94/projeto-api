@@ -1,10 +1,13 @@
 from flask import Flask
 from flask_cors import CORS
 from flask_jwt_extended import JWTManager
+from flask_mail import Mail
 import asyncio
 
 from app.core.db import init_db
 from app.core.config import Config
+
+mail = Mail()
 
 def create_app():
     app = Flask(__name__)
@@ -14,6 +17,13 @@ def create_app():
     JWTManager(app)
     
     asyncio.run(init_db())
+    
+    if not app.debug:
+        import logging
+        logging.basicConfig(level=logging.INFO)
+        app.logger = logging.getLogger(__name__)
+    
+    mail.init_app(app)
     
     from app.auth.routes import auth_bp
     from app.books.routes import books_bp
