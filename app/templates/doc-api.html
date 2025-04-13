@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="shortcut icon" href="../static/favicon.ico" type="image/x-icon">
+    <title>📚 Documentação da API - Doação de Livros</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            margin: 0;
+            padding: 20px;
+            background-color: #f9f9f9;
+            color: #333;
+        }
+
+        h1,
+        h2,
+        h3 {
+            color: #2c3e50;
+        }
+
+        pre {
+            background: #f0f0f0;
+            padding: 10px;
+            border-radius: 5px;
+            overflow-x: auto;
+        }
+
+        code {
+            background: #eaeaea;
+            padding: 2px 5px;
+            border-radius: 3px;
+        }
+
+        section {
+            margin-bottom: 40px;
+        }
+
+        .endpoint {
+            font-family: monospace;
+            color: #2980b9;
+        }
+
+        .highlight {
+            background-color: #ffffcc;
+        }
+    </style>
+</head>
+
+<body>
+
+    <h1>📚 API - Sistema de Doação de Livros</h1>
+
+    <p><strong>Base URL:</strong> <code>http://127.0.0.1:5000</code></p>
+    <p><strong>Autenticação:</strong> <code>Bearer Token (JWT)</code></p>
+
+    <pre><code>Authorization: Bearer &lt;seu_token_jwt&gt;
+Content-Type: application/json</code></pre>
+
+    <hr>
+
+    <section>
+        <h2>🔐 Auth</h2>
+
+        <h3 class="endpoint">POST /auth/register</h3>
+        <p>Registrar novo usuário</p>
+        <pre><code>{
+  "email": "example@example.com",
+  "nickname": "example",
+  "password": "example123"
+}</code></pre>
+
+        <h3 class="endpoint">POST /auth/login</h3>
+        <p>Login do usuário</p>
+        <pre><code>{
+  "email": "example@example.com",
+  "password": "example123"
+}</code></pre>
+
+        <h4>Resposta</h4>
+        <pre><code>{
+  "access_token": "&lt;token_jwt&gt;"
+}</code></pre>
+
+        <h3 class="endpoint">POST /auth/logout</h3>
+        <p>Logout do usuário (invalida o token)</p>
+
+        <h3 class="endpoint">POST /auth/forgot-password</h3>
+        <p>Enviar e-mail para recuperação de senha</p>
+        <pre><code>{
+  "email": "example@example.com"
+}</code></pre>
+
+        <h3 class="endpoint">POST /auth/reset-password/&lt;token&gt;</h3>
+        <p>Redefinir senha com token</p>
+        <pre><code>{
+  "new_password": "NovaSenha@2025",
+  "confirm_password": "NovaSenha@2025"
+}</code></pre>
+    </section>
+
+    <section>
+        <h2>👤 Users</h2>
+
+        <h3 class="endpoint">GET /users/&lt;id&gt;</h3>
+        <p>Detalhes de um usuário</p>
+
+        <h3 class="endpoint">PUT /users/&lt;id&gt;</h3>
+        <p>Atualizar dados do perfil</p>
+        <pre><code>{
+  "nickname": "novo_nickname",
+  "email": "novoemail@example.com"
+}</code></pre>
+
+        <h3 class="endpoint">GET /users/&lt;id&gt;/books</h3>
+        <p>Listar livros cadastrados por um usuário</p>
+
+        <h3 class="endpoint">PUT /users/password</h3>
+        <p>Atualizar senha do usuário</p>
+        <pre><code>{
+  "old_password": "senhaAntiga123",
+  "new_password": "NovaSenha@2025"
+}</code></pre>
+    </section>
+
+    <section>
+        <h2>📚 Books</h2>
+
+        <h3 class="endpoint">GET /books</h3>
+        <p>Listar todos os livros disponíveis</p>
+
+        <h3 class="endpoint">GET /books/&lt;termo&gt;</h3>
+        <p>Buscar livros por título ou autor</p>
+
+        <h3 class="endpoint">POST /books</h3>
+        <p>Cadastrar novo livro</p>
+        <pre><code>{
+  "title": "Dom Casmurro",
+  "author": "Machado de Assis",
+  "category": "Literatura",
+  "image_url": "https://teste.com/imagem.jpg"
+}</code></pre>
+
+        <h3 class="endpoint">PUT /books/&lt;id&gt;</h3>
+        <p>Editar informações de um livro</p>
+        <pre><code>{
+  "title": "Novo Título",
+  "author": "Novo Autor",
+  "category": "Nova Categoria",
+  "image_url": "https://example.com/image.jpeg"
+}</code></pre>
+
+        <h3 class="endpoint">DELETE /books/&lt;id&gt;</h3>
+        <p>Remover um livro</p>
+    </section>
+
+</body>
+
+</html>
