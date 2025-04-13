@@ -142,7 +142,7 @@ async def forgot_password():
 
 @auth_bp.route('/reset-password/<token>', methods=['POST'])
 async def reset_password(token):
-    conn = None  # ← importante para evitar erro no finally
+    conn = None 
     data = request.get_json()
     new_password = data.get('new_password')
     confirm_password = data.get('confirm_password')
@@ -169,7 +169,6 @@ async def reset_password(token):
         if not user:
             return jsonify({'error': 'Usuário não encontrado'}), 404
 
-        # com passlib
         from passlib.hash import bcrypt
         hashed_password = bcrypt.hash(new_password)
 

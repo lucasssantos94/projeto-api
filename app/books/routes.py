@@ -100,10 +100,3 @@ async def delete_book(book_id):
     
     await conn.execute("DELETE FROM books WHERE id = $1", book_id)
     return jsonify({'message': 'Livro deletado com sucesso!'}), 200
-
-    
-    
-    # if not validar_url(image_url):
-    #     return jsonify({'error': 'URL da imagem inválida'}), 400
-    
-   

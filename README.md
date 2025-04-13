@@ -1,41 +1,194 @@
-# Gerenciamento de Livros - API Flask
+# 📚 API - Sistema de Doação de Livros
 
-Este projeto é uma API simples para gerenciamento de livros, desenvolvida em **Flask** e utilizando **SQLite** como banco de dados. A API permite listar, adicionar, editar e deletar livros, além de fornecer uma documentação interativa.
+**Base URL**: `http://127.0.0.1:5000`  
+**Autenticação**: **Bearer Token (JWT)**
 
-## Funcionalidades
+Adicione este header em rotas protegidas:
 
-- **Listar Livros**: Retorna todos os livros cadastrados.
-- **Doar Livro**: Adiciona um novo livro ao banco de dados.
-- **Editar Livro**: Atualiza as informações de um livro existente.
-- **Deletar Livro**: Remove um livro do banco de dados.
-- **Documentação**: Uma página HTML estilizada com a documentação da API.
+```
+Authorization: Bearer <seu_token_jwt>
+Content-Type: application/json
+```
 
-## Linguagens e Ferramentas Utilizadas
+---
 
-- **Linguagens**:
-  - Python
-  - HTML
-  - CSS
+## 🔐 Auth
 
-- **Frameworks e Bibliotecas**:
-  - Flask (Framework web)
-  - SQLite3 (Banco de dados)
-  - Bootstrap (Estilização da documentação)
+### `POST /auth/register`
 
-- **Ferramentas**:
-  - Git (Controle de versão)
-  - GitHub (Hospedagem do código)
+📌 **Registrar novo usuário**
 
-## Como Executar o Projeto
+```json
+{
+  "email": "example@example.com",
+  "nickname": "example",
+  "password": "example123"
+}
+```
 
-### Pré-requisitos
+---
 
-- Python 3.x instalado.
-- Pip (gerenciador de pacotes do Python).
+### `POST /auth/login`
 
-### Passos para Execução
+📌 **Login do usuário**
 
-1. **Clone o repositório**:
-   ```bash
-   git clone https://github.com/seu-usuario/nome-do-repositorio.git
-   cd nome-do-repositorio
+```json
+{
+  "email": "example@example.com",
+  "password": "example123"
+}
+```
+
+**Resposta:**
+
+```json
+{
+  "access_token": "<token_jwt>"
+}
+```
+
+---
+
+### `POST /auth/logout`
+
+📌 **Logout do usuário (invalida o token)**  
+**Headers:**
+
+```
+Authorization: Bearer <token>
+```
+
+---
+
+### `POST /auth/forgot-password`
+
+📌 **Enviar e-mail para recuperação de senha**
+
+```json
+{
+  "email": "example@example.com"
+}
+```
+
+---
+
+### `POST /auth/reset-password/<token>`
+
+📌 **Redefinir senha com token**
+**Headers:**
+
+```
+Authorization: Bearer <token>
+```
+
+```json
+{
+  "new_password": "NovaSenha@2025",
+  "confirm_password": "NovaSenha@2025"
+}
+```
+
+---
+
+## 👤 Users
+
+### `GET /users/<id>`
+
+📌 **Detalhes de um usuário**  
+Exemplo: `/users/f17768a7-080c-4422-925f-f554344f54e5`
+
+---
+
+### `PUT /users/<id>`
+
+📌 **Atualizar dados do perfil**  
+**Headers:**  
+`Authorization: Bearer <token>`
+
+```json
+{
+  "nickname": "novo_nickname",
+  "email": "novoemail@example.com"
+}
+```
+
+---
+
+### `GET /users/<id>/books`
+
+📌 **Listar livros cadastrados por um usuário**  
+Exemplo: `/users/6ccb4d7d-aa6a-4608-880f-92d5be706891/books`
+
+---
+
+### `PUT /users/password`
+
+📌 **Atualizar senha do usuário**  
+**Headers:**  
+`Authorization: Bearer <token>`
+
+```json
+{
+  "old_password": "senhaAntiga123",
+  "new_password": "NovaSenha@2025"
+}
+```
+
+---
+
+## 📚 Books
+
+### `GET /books`
+
+📌 **Listar todos os livros disponíveis**  
+**Headers:**  
+`Authorization: Bearer <token>`
+
+---
+
+### `GET /books/<termo>`
+
+📌 **Buscar livros por título ou autor**  
+Exemplo: `/books/teste`
+
+---
+
+### `POST /books`
+
+📌 **Cadastrar novo livro**  
+**Headers:**  
+`Authorization: Bearer <token>`
+
+```json
+{
+  "title": "Dom Casmurro",
+  "author": "Machado de Assis",
+  "category": "Literatura",
+  "image_url": "https://teste.com/imagem.jpg"
+}
+```
+
+---
+
+### `PUT /books/<id>`
+
+📌 **Editar informações de um livro**  
+**Headers:**  
+`Authorization: Bearer <token>`
+
+```json
+{
+  "title": "Novo Título",
+  "author": "Novo Autor",
+  "category": "Nova Categoria",
+  "image_url": "https://example.com/image.jpeg"
+}
+```
+
+---
+
+### `DELETE /books/<id>`
+
+📌 **Remover um livro**  
+**Headers:**  
+`Authorization: Bearer <token>`
